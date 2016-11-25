@@ -36,8 +36,13 @@ const projectParameters = {
     'NAME': projectName
 }
 
+const PARAM_RE = /^(.*?)(=(.*))?$/
 args.forEach(function(it) {
-    projectParameters[it] = true;
+    const m = PARAM_RE.exec(it)
+    const paramName = m[1]
+    const paramValue = m[3] ? m[3] : true
+
+    projectParameters[paramName] = paramValue
 })
 
 // ==========================================================================
