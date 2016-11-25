@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "ars": "./index.js"
+  },
   "keywords": [
     "ars",
     "handlebars",
