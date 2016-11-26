@@ -9,11 +9,16 @@ const handlebars = require("handlebars"),
       colors = require("colors/safe"),
       fs = require("fs"),
       fsExtra = require("fs-extra"),
-      path = require("path");
+      path = require("path"),
+      childProcess = require("child_process");
 
 const ARS_PROJECTS_FOLDER = process.env.ARS_PROJECTS_FOLDER ?
                 process.env.ARS_PROJECTS_FOLDER :
                 path.join(process.env.HOME, ".projects")
+
+const ARS_DIFF_TOOL = process.env.ARS_DIFF_TOOL ?
+                process.env.ARS_DIFF_TOOL :
+                'vimdiff'
 
 // ==========================================================================
 // Parse the projectName, and projectParameters from the program arguments
@@ -24,18 +29,33 @@ for (var i = 2; i < process.argv.length; i++) {
     args.push(process.argv[i]);
 }
 
-if (!args.length) {
+// ==========================================================================
+// Read previous settings if they are available
+// ==========================================================================
+
+let projectParameters = null
+
+if (isFile(".ars")) {
+    projectParameters = JSON.parse(fs.readFileSync(".ars", "utf-8"))
+    console.log(colors.cyan(`Using already existing '.ars' file settings: ${JSON.stringify(projectParameters)}`))
+}
+
+// we don't have project parameters, nor default settins, bailing out
+if (!args.length && !projectParameters) {
     console.log(colors.red("You need to pass a project name to generate."));
     process.exit(1);
 }
 
-const projectName = args[0]
-args.splice(0, 1)
+// if we have arguments, we need to either create, or augument the projectParameters
+// with the new settings.
+if (args.length) {
+    projectParameters = projectParameters ? projectParameters : {}
 
-const projectParameters = {
-    'NAME': projectName
+    projectParameters['NAME'] = args[0]
+    args.splice(0, 1)
 }
 
+// we iterate the rest of the parameters, and augument the projectParameters
 const PARAM_RE = /^(.*?)(=(.*))?$/
 args.forEach(function(it) {
     const m = PARAM_RE.exec(it)
@@ -45,40 +65,15 @@ args.forEach(function(it) {
     projectParameters[paramName] = paramValue
 })
 
+const projectName = projectParameters.NAME
+
 // ==========================================================================
 // Generate the actual project.
 // ==========================================================================
 console.log(`Generating ${projectName} with ${JSON.stringify(projectParameters)}.`)
 
-/**
- * parseFileName - Parse the file name
- * @param {string} fileName
- * @return {Object}
- */
-function parseFileName(fileName) {
-    const result = {
-        name: null,
-        originalName: fileName,
-        keepExisting: false,
-        hbsTemplate: false
-    };
-
-    let name = fileName;
-
-    if (/\.KEEP$/.test(name)) {
-        result.keepExisting = true
-        name = name.substring(0, name.length - ".KEEP".length)
-    }
-
-    if (/\.hbs/.test(name)) {
-        result.hbsTemplate = true
-        name = name.substring(0, name.length - ".hbs".length)
-    }
-
-    result.name = name;
-
-    return result;
-}
+fs.writeFileSync(".ars", JSON.stringify(projectParameters), "utf-8")
+processFolder(".", path.join(ARS_PROJECTS_FOLDER, projectName))
 
 /**
  * Recursively process the handlebars templates for the given project.
@@ -111,19 +106,87 @@ function processFolder(currentPath, fullFolderPath) {
         }
 
         if (!f.hbsTemplate) {
-            console.log(colors.cyan("Copying regular file : " + fullLocalPath))
+            if (!isFile(fullLocalPath)) {
+                console.log(colors.cyan("Copying regular file : " + fullLocalPath))
+                fsExtra.copySync(fullFilePath, fullLocalPath);
+
+                return;
+            }
+
+            if (fs.readFileSync(fullFilePath, "utf-8") == fs.readFileSync(fullLocalPath, "utf-8")) {
+                console.log(colors.cyan("No update needed     : " + fullLocalPath));
+                return;
+            }
+
+            // we have a conflict.
+            let fullLocalPathOrig = fullLocalPath + ".orig"
+
+            fsExtra.copySync(fullLocalPath, fullLocalPathOrig);
             fsExtra.copySync(fullFilePath, fullLocalPath);
+            executeDiff(ARS_DIFF_TOOL, fullLocalPath, fullLocalPathOrig);
+            fs.unlinkSync(fullLocalPathOrig);
+
+            console.log(colors.red("Conflict resolved    : " + fullLocalPath));
+
             return;
         }
 
 
-        console.log(colors.cyan("Parsing HBS template : " + fullLocalPath))
         let templateContent = fs.readFileSync(fullFilePath, "utf-8")
         let template = handlebars.compile(templateContent)
         let content = template(projectParameters)
 
+        if (!isFile(fullLocalPath)) {
+            console.log(colors.cyan("Parsing HBS template : " + fullLocalPath))
+            fs.writeFileSync(fullLocalPath, content, "utf-8")
+
+            return;
+        }
+
+        if (content == fs.readFileSync(fullLocalPath, "utf-8")) {
+            console.log(colors.cyan("No update needed     : " + fullLocalPath));
+            return;
+        }
+
+        let fullLocalPathOrig = fullLocalPath + ".orig"
+
+        fsExtra.copySync(fullLocalPath, fullLocalPathOrig);
         fs.writeFileSync(fullLocalPath, content, "utf-8")
+        executeDiff(ARS_DIFF_TOOL, fullLocalPath, fullLocalPathOrig);
+        fs.unlinkSync(fullLocalPathOrig);
+
+        console.log(colors.red("Conflict resolved HBS: " + fullLocalPath));
     });
+}
+
+/**
+ * parseFileName - Parse the file name
+ * @param {string} fileName
+ * @return {Object}
+ */
+function parseFileName(fileName) {
+    const result = {
+        name: null,
+        originalName: fileName,
+        keepExisting: false,
+        hbsTemplate: false
+    };
+
+    let name = fileName;
+
+    if (/\.KEEP$/.test(name)) {
+        result.keepExisting = true
+        name = name.substring(0, name.length - ".KEEP".length)
+    }
+
+    if (/\.hbs/.test(name)) {
+        result.hbsTemplate = true
+        name = name.substring(0, name.length - ".hbs".length)
+    }
+
+    result.name = name;
+
+    return result;
 }
 
 /**
@@ -132,7 +195,11 @@ function processFolder(currentPath, fullFolderPath) {
  * @return {boolean}
  */
 function isDirectory(name) {
-    return fs.statSync(name).isDirectory();
+    try {
+        return fs.statSync(name).isDirectory();
+    } catch (e) {
+        return false;
+    }
 }
 
 /**
@@ -141,7 +208,23 @@ function isDirectory(name) {
  * @return {boolean}
  */
 function isFile(name) {
-    return fs.statSync(name).isFile();
+    try {
+        return fs.statSync(name).isFile();
+    } catch (e) {
+        return false;
+    }
 }
 
-processFolder(".", path.join(ARS_PROJECTS_FOLDER, projectName))
+/**
+ * executeDiff - Execute the given diff process.
+ * @param {string} diff program name
+ * @param {string} file1 first file to diff
+ * @param {string} file2 second file do diff
+ * @return {void}
+ */
+function executeDiff(processName, file1, file2) {
+    childProcess.execSync(
+        `${processName} "${file1}" "${file2}"`,
+        {stdio:[0,1,2]});
+}
+

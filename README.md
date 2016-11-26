@@ -14,6 +14,15 @@ npm install -g ars
 ars project-type
 ```
 
+or if a project is already created, and we want to reaply the templates,
+but with a tree diff for all the conflicting files. This will use the program
+specified in the `ARS_DIFF_TOOL` or in case the variable is not defined
+`vimdiff`:
+
+```
+arst project-type
+```
+
 This will copy all the resources from the `~/.projects/project-type`
 into the current folder. Files that have the `.hbs` extension will
 be used as templates, and copied with the extension removed.
@@ -40,6 +49,9 @@ folder:
 ```
 
 The package.json file will be parsed as expected.
+
+If the file name from the project ends with `.KEEP` on subsequent
+calls from the same folder, it won't be overwritten.
 
 ## Parameters
 
