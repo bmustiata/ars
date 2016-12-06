@@ -1,12 +1,12 @@
 // ==========================================================================
 // Requires
 // ==========================================================================
-const handlebars = require("handlebars"),
-      colors = require("colors/safe"),
-      fs = require("fs"),
-      fsExtra = require("fs-extra"),
-      path = require("path"),
-      childProcess = require("child_process");
+import * as fs from "fs"
+import * as handlebars from "handlebars"
+import * as colors from "colors"
+import * as fsExtra from "fs-extra"
+import * as path from "path"
+import * as childProcess from "child_process"
 
 const ARS_PROJECTS_FOLDER = process.env.ARS_PROJECTS_FOLDER ?
                 process.env.ARS_PROJECTS_FOLDER :
@@ -38,7 +38,15 @@ if (isFile(".ars")) {
 
 // we don't have project parameters, nor default settins, bailing out
 if (!args.length && !projectParameters) {
-    console.log(colors.red("You need to pass a project name to generate."));
+    console.log(colors.red("You need to pass a project name to generate."))
+
+    console.log(`Available projects (${colors.cyan(ARS_PROJECTS_FOLDER)}):`)
+    fs.readdirSync(ARS_PROJECTS_FOLDER)
+      .sort()
+      .forEach((it) => {
+        console.log(` * ${it}`)
+      })
+
     process.exit(1);
 }
 

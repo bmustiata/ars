@@ -1,8 +1,8 @@
 {
   "name": "ars",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Poor man's yo.",
-  "main": "index.js",
+  "main": "./out/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,6 +21,8 @@
   "license": "BSD-3-Clause",
   "devDependencies": {
     "@types/colors": "0.6.33",
+    "@types/fs-extra": "0.0.35",
+    "@types/handlebars": "4.0.31",
     "@types/node": "0.0.2",
     "babel-core": "^6.17.0",
     "babel-loader": "^6.2.5",
@@ -38,4 +40,3 @@
     "handlebars": "^4.0.6"
   }
 }
-
