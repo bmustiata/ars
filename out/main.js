@@ -108,18 +108,21 @@ module.exports =
 	}
 	// we iterate the rest of the parameters, and augument the projectParameters
 	var PARAM_RE = /^(.*?)(=(.*))?$/;
-	args.forEach(function (it) {
+	args.forEach(function (it, index) {
 	    var m = PARAM_RE.exec(it);
 	    var paramName = m[1];
 	    var paramValue = m[3] ? m[3] : true;
 	    projectParameters[paramName] = paramValue;
+	    projectParameters["arg" + index] = paramName;
 	});
 	var projectName = projectParameters.NAME;
 	// ==========================================================================
 	// Generate the actual project.
 	// ==========================================================================
 	console.log("Generating " + projectName + " with " + JSON.stringify(projectParameters) + ".");
-	fs.writeFileSync(".ars", JSON.stringify(projectParameters), "utf-8");
+	if (!isFile(path.join(ARS_PROJECTS_FOLDER, projectName, ".noars"))) {
+	    fs.writeFileSync(".ars", JSON.stringify(projectParameters), "utf-8");
+	}
 	processFolder(".", path.join(ARS_PROJECTS_FOLDER, projectName));
 	/**
 	 * Recursively process the handlebars templates for the given project.
@@ -128,9 +131,13 @@ module.exports =
 	 */
 	function processFolder(currentPath, fullFolderPath) {
 	    fs.readdirSync(fullFolderPath).forEach(function (fileName) {
-	        var f = parseFileName(fileName);
+	        var f = parseFileName(fileName, projectParameters);
 	        var fullLocalPath = path.join(currentPath, f.name);
 	        var fullFilePath = path.join(fullFolderPath, f.originalName);
+	        if (fileName == ".noars") {
+	            console.log(colors.yellow("Ignoring file        : " + ".noars"));
+	            return;
+	        }
 	        if (isDirectory(fullFilePath)) {
 	            if (isDirectory(fullLocalPath)) {
 	                console.log(colors.yellow("Already exists folder: " + fullLocalPath));
@@ -187,9 +194,10 @@ module.exports =
 	/**
 	 * parseFileName - Parse the file name
 	 * @param {string} fileName
+	 * @param {any} projectParameters
 	 * @return {Object}
 	 */
-	function parseFileName(fileName) {
+	function parseFileName(fileName, projectParameters) {
 	    var result = {
 	        name: null,
 	        originalName: fileName,
@@ -205,7 +213,7 @@ module.exports =
 	        result.hbsTemplate = true;
 	        name = name.substring(0, name.length - ".hbs".length);
 	    }
-	    result.name = name;
+	    result.name = handlebars.compile(name)(projectParameters);
 	    return result;
 	}
 	/**

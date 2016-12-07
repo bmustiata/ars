@@ -1,14 +1,14 @@
 {
   "name": "ars",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Poor man's yo.",
-  "main": "./out/index.js",
+  "main": "./out/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "ars": "./out/index.js",
-    "arst": "./out/index.js"
+    "ars": "./out/main.js",
+    "arst": "./out/main.js"
   },
   "keywords": [
     "ars",

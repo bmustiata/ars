@@ -47,7 +47,7 @@ if (!args.length && !projectParameters) {
         console.log(` * ${it}`)
       })
 
-    process.exit(1);
+    process.exit(1)
 }
 
 // if we have arguments, we need to either create, or augument the projectParameters
@@ -61,12 +61,13 @@ if (args.length) {
 
 // we iterate the rest of the parameters, and augument the projectParameters
 const PARAM_RE = /^(.*?)(=(.*))?$/
-args.forEach(function(it) {
+args.forEach(function(it, index) {
     const m = PARAM_RE.exec(it)
     const paramName = m[1]
     const paramValue = m[3] ? m[3] : true
 
     projectParameters[paramName] = paramValue
+    projectParameters[`arg${index}`] = paramName
 })
 
 const projectName = projectParameters.NAME
@@ -76,7 +77,10 @@ const projectName = projectParameters.NAME
 // ==========================================================================
 console.log(`Generating ${projectName} with ${JSON.stringify(projectParameters)}.`)
 
-fs.writeFileSync(".ars", JSON.stringify(projectParameters), "utf-8")
+if (!isFile(path.join(ARS_PROJECTS_FOLDER, projectName, ".noars"))) {
+    fs.writeFileSync(".ars", JSON.stringify(projectParameters), "utf-8")
+}
+
 processFolder(".", path.join(ARS_PROJECTS_FOLDER, projectName))
 
 /**
@@ -86,10 +90,15 @@ processFolder(".", path.join(ARS_PROJECTS_FOLDER, projectName))
  */
 function processFolder(currentPath, fullFolderPath) {
     fs.readdirSync(fullFolderPath).forEach(function(fileName) {
-        let f = parseFileName(fileName)
+        let f = parseFileName(fileName, projectParameters)
 
         let fullLocalPath = path.join(currentPath, f.name);
         let fullFilePath = path.join(fullFolderPath, f.originalName);
+
+        if (fileName == ".noars") {
+            console.log(colors.yellow("Ignoring file        : " + ".noars"))
+            return
+        }
 
         if (isDirectory(fullFilePath)) {
             if (isDirectory(fullLocalPath)) {
@@ -166,9 +175,10 @@ function processFolder(currentPath, fullFolderPath) {
 /**
  * parseFileName - Parse the file name
  * @param {string} fileName
+ * @param {any} projectParameters
  * @return {Object}
  */
-function parseFileName(fileName) {
+function parseFileName(fileName, projectParameters) {
     const result = {
         name: null,
         originalName: fileName,
@@ -188,7 +198,7 @@ function parseFileName(fileName) {
         name = name.substring(0, name.length - ".hbs".length)
     }
 
-    result.name = name;
+    result.name = handlebars.compile(name)(projectParameters);
 
     return result;
 }

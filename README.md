@@ -1,4 +1,4 @@
-# ars
+# ars(onist)
 
 Poor man's yo for quick project generation.
 
@@ -68,12 +68,29 @@ This will generate a `package-type` project with the following parameters sent i
     "NAME" : "package-type",
     "name1" : "value",
     "name2" : true,
-    "name3" : "3"
+    "name3" : "3",
+    "arg0": "name1",
+    "arg1": "name2",
+    "arg2": "name3"
 }
 ```
+
+Since the templating also happens to the file names themselves, so a file named `{{name1}}.txt` will be installed as `value.txt`.
+This is particularily useful in conjunction with the positional argument names, making possible scenarios such as:
+
+```sh
+ars new-model User
+```
+
+If in our project we have: `{{arg0}}.html.hbs` and `{{arg0}}.js.hbs`, they will be expanded as: 
+`User.html` and `User.js`.
 
 ## Configuration
 
 If you store your project files into a different folder, you can use
 the `ARS_PROJECTS_FOLDER` environment variable to point to the
 absolute path of it.
+
+Implicitly when creating a new project, an `.ars` file will be created with the current
+ settings, so if the project is changed, you can reaplly your project template. If you want
+ not to have this file created, just add a `.noars` file in the project template.
