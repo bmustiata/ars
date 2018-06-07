@@ -5,6 +5,7 @@
     "experimentalDecorators" : true,
     "moduleResolution": "node",
     "sourceMap": true,
-    "jsx": "react"
+    "jsx": "react",
+    "types": []
   }
 }

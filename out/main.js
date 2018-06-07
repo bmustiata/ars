@@ -46,27 +46,30 @@ module.exports =
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	__webpack_require__(1);
 	module.exports = __webpack_require__(2);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = require("babel-polyfill");
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
+	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+	
+	Object.defineProperty(exports, "__esModule", { value: true });
 	// ==========================================================================
 	// Requires
 	// ==========================================================================
-	
 	var fs = __webpack_require__(3);
 	var handlebars = __webpack_require__(4);
 	var colors = __webpack_require__(5);
@@ -79,8 +82,13 @@ module.exports =
 	// Parse the projectName, and projectParameters from the program arguments
 	// ==========================================================================
 	var args = [];
-	for (var i = 2; i < process.argv.length; i++) {
-	    args.push(process.argv[i]);
+	args.push.apply(args, _toConsumableArray(process.argv));
+	args.splice(0, 2);
+	var generateArs = true;
+	var noArsParameterPosition = args.indexOf('-n');
+	if (noArsParameterPosition >= 0) {
+	    generateArs = false;
+	    args.splice(noArsParameterPosition, 1);
 	}
 	// ==========================================================================
 	// Read previous settings if they are available
@@ -120,8 +128,8 @@ module.exports =
 	// Generate the actual project.
 	// ==========================================================================
 	console.log("Generating " + projectName + " with " + JSON.stringify(projectParameters) + ".");
-	if (!isFile(path.join(ARS_PROJECTS_FOLDER, projectName, ".noars"))) {
-	    fs.writeFileSync(".ars", JSON.stringify(projectParameters), "utf-8");
+	if (!isFile(path.join(ARS_PROJECTS_FOLDER, projectName, ".noars")) && generateArs) {
+	    fs.writeFileSync(".ars", JSON.stringify(projectParameters), { encoding: "utf-8" });
 	}
 	processFolder(".", path.join(ARS_PROJECTS_FOLDER, projectName));
 	/**
@@ -176,7 +184,7 @@ module.exports =
 	        var content = template(projectParameters);
 	        if (!isFile(fullLocalPath)) {
 	            console.log(colors.cyan("Parsing HBS template : " + fullLocalPath));
-	            fs.writeFileSync(fullLocalPath, content, "utf-8");
+	            fs.writeFileSync(fullLocalPath, content, { encoding: "utf-8" });
 	            return;
 	        }
 	        if (content == fs.readFileSync(fullLocalPath, "utf-8")) {
@@ -185,7 +193,7 @@ module.exports =
 	        }
 	        var fullLocalPathOrig = fullLocalPath + ".orig";
 	        fsExtra.copySync(fullLocalPath, fullLocalPathOrig);
-	        fs.writeFileSync(fullLocalPath, content, "utf-8");
+	        fs.writeFileSync(fullLocalPath, content, { encoding: "utf-8" });
 	        executeDiff(ARS_DIFF_TOOL, fullLocalPath, fullLocalPathOrig);
 	        fs.unlinkSync(fullLocalPathOrig);
 	        console.log(colors.red("Conflict resolved HBS: " + fullLocalPath));
@@ -251,42 +259,42 @@ module.exports =
 	    childProcess.execSync(processName + " \"" + file1 + "\" \"" + file2 + "\"", { stdio: [0, 1, 2] });
 	}
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = require("fs");
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = require("handlebars");
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = require("colors");
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = require("fs-extra");
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = require("path");
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = require("child_process");
 
-/***/ }
+/***/ })
 /******/ ]);
 //# sourceMappingURL=main.js.map

@@ -1,14 +1,14 @@
 {
   "name": "ars",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Poor man's yo.",
   "main": "./out/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "ars": "./out/main.js",
-    "arst": "./out/main.js"
+    "ars": "./out/main",
+    "arst": "./out/main"
   },
   "keywords": [
     "ars",
@@ -28,8 +28,8 @@
     "babel-loader": "^6.2.5",
     "babel-preset-es2015": "^6.16.0",
     "smart-banner-webpack-plugin": "2.0.0",
-    "ts-loader": "^1.2.2",
-    "typescript": "^2.0.3",
+    "ts-loader": "3.5.0",
+    "typescript": "2.9.1",
     "webpack": "^1.13.2"
   },
   "dependencies": {

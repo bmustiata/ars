@@ -19,10 +19,17 @@ const ARS_DIFF_TOOL = process.env.ARS_DIFF_TOOL ?
 // ==========================================================================
 // Parse the projectName, and projectParameters from the program arguments
 // ==========================================================================
-const args = [];
+const args : Array<string> = [];
+args.push(...process.argv)
+args.splice(0, 2)
 
-for (var i = 2; i < process.argv.length; i++) {
-    args.push(process.argv[i]);
+let generateArs = true
+
+const noArsParameterPosition = args.indexOf('-n')
+
+if (noArsParameterPosition >= 0) {
+    generateArs = false;
+    args.splice(noArsParameterPosition, 1);
 }
 
 // ==========================================================================
@@ -77,8 +84,8 @@ const projectName = projectParameters.NAME
 // ==========================================================================
 console.log(`Generating ${projectName} with ${JSON.stringify(projectParameters)}.`)
 
-if (!isFile(path.join(ARS_PROJECTS_FOLDER, projectName, ".noars"))) {
-    fs.writeFileSync(".ars", JSON.stringify(projectParameters), "utf-8")
+if (!isFile(path.join(ARS_PROJECTS_FOLDER, projectName, ".noars")) && generateArs) {
+    fs.writeFileSync(".ars", JSON.stringify(projectParameters), {encoding: "utf-8"})
 }
 
 processFolder(".", path.join(ARS_PROJECTS_FOLDER, projectName))
@@ -151,7 +158,7 @@ function processFolder(currentPath, fullFolderPath) {
 
         if (!isFile(fullLocalPath)) {
             console.log(colors.cyan("Parsing HBS template : " + fullLocalPath))
-            fs.writeFileSync(fullLocalPath, content, "utf-8")
+            fs.writeFileSync(fullLocalPath, content, {encoding: "utf-8"})
 
             return;
         }
@@ -164,7 +171,7 @@ function processFolder(currentPath, fullFolderPath) {
         let fullLocalPathOrig = fullLocalPath + ".orig"
 
         fsExtra.copySync(fullLocalPath, fullLocalPathOrig);
-        fs.writeFileSync(fullLocalPath, content, "utf-8")
+        fs.writeFileSync(fullLocalPath, content, {encoding: "utf-8"})
         executeDiff(ARS_DIFF_TOOL, fullLocalPath, fullLocalPathOrig);
         fs.unlinkSync(fullLocalPathOrig);
 
